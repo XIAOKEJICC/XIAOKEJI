@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>发布公共帖子</title>
+  <title>发布帖子</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,58 +15,66 @@
     <form id="post-form" class="post-form">
       <div class="form-group">
         <label>标题</label>
-        <input type="text" id="title" required placeholder="请输入标题">
+        <input type="text" id="title" required>
       </div>
       <div class="form-group">
         <label>内容</label>
-        <textarea id="content" required rows="6" placeholder="请输入内容"></textarea>
+        <textarea id="content" rows="6" required></textarea>
       </div>
       <div class="form-group">
         <label>上传图片</label>
         <input type="file" id="image-input" accept="image/*">
       </div>
-      <button type="submit" class="btn submit-btn">发布到公共论坛</button>
+      <button type="submit" class="btn submit-btn">发布</button>
     </form>
   </div>
 
   <script>
-    const API_URL = "https://jsonbox.io/demoposts123";
+    const GIST_ID = "52ebb613889ce20c322b78f889d82195";
+    const GIST_URL = `https://api.github.com/gists/${GIST_ID}`;
     const form = document.getElementById("post-form");
     const imageInput = document.getElementById("image-input");
     let postImage = "";
 
-    // 图片上传处理
-    imageInput.addEventListener("change", function (e) {
+    // 图片处理
+    imageInput.addEventListener("change", e => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (e) {
-          postImage = e.target.result;
-        };
+        reader.onload = e => postImage = e.target.result;
         reader.readAsDataURL(file);
       }
     });
 
-    // 发布到公共数据
-    form.addEventListener("submit", async function (e) {
+    // 发布
+    form.addEventListener("submit", async e => {
       e.preventDefault();
-
       const title = document.getElementById("title").value.trim();
       const content = document.getElementById("content").value.trim();
       const time = new Date().toLocaleString();
 
-      const newPost = { title, content, time, image: postImage };
+      // 获取现有帖子
+      const res = await fetch(GIST_URL);
+      const data = await res.json();
+      const posts = JSON.parse(data.files["posts.json"].content) || [];
 
-      await fetch(API_URL, {
-        method: "POST",
+      // 添加新帖子
+      posts.push({ title, content, time, image: postImage });
+
+      // 更新到公共 Gist
+      await fetch(GIST_URL, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPost)
+        body: JSON.stringify({
+          files: {
+            "posts.json": { content: JSON.stringify(posts, null, 2) }
+          }
+        })
       });
 
-      alert("发布成功！全世界都能看到你的帖子！");
+      alert("发布成功！全世界都能看到！");
       location.href = "index.html";
     });
   </script>
-</script>
 </body>
 </html>
