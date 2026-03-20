@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>公共帖子论坛</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>公共帖子论坛</h1>
+      <a href="post.html" class="btn">发布新帖子</a>
+    </header>
+
+    <div id="post-list">
+      加载中...
+    </div>
+  </div>
+
+  <script>
+    // 公共数据地址（所有人共用）
+    const API_URL = "https://jsonbox.io/demoposts123";
+
+    // 加载所有公共帖子
+    async function loadPosts() {
+      let postList = document.getElementById("post-list");
+      try {
+        let res = await fetch(API_URL);
+        let posts = await res.json();
+
+        postList.innerHTML = "";
+
+        if (posts.length === 0) {
+          postList.innerHTML = "<p>还没有帖子，快来发第一个！</p>";
+          return;
+        }
+
+        // 倒序展示
+        posts.reverse().forEach(post => {
+          let item = document.createElement("div");
+          item.className = "post-item";
+
+          let imgHtml = post.image ? `<img src="${post.image}" class="post-image">` : "";
+
+          item.innerHTML = `
+            <h3>${post.title}</h3>
+            <p>${post.content}</p>
+            ${imgHtml}
+            <small>发布时间：${post.time}</small>
+          `;
+          postList.appendChild(item);
+        });
+      } catch (err) {
+        postList.innerHTML = "<p>加载失败，请刷新重试</p>";
+      }
+    }
+
+    window.onload = loadPosts;
+  </script>
+</body>
+</html>
